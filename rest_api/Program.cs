@@ -35,7 +35,15 @@ app.MapGet("/getAll", async (IConfiguration config) =>
     var items = new List<rest_api.Task>();
     while (await reader.ReadAsync())
     {
-        items.Add(new rest_api.Task { Id=reader.GetInt32(0), expiry=reader.GetDateTime(1), title=reader.GetString(2), description=reader.GetString(3), completePercentage=reader.GetInt32(4)});
+        if(!reader.IsDBNull(3))
+        {
+            items.Add(new rest_api.Task { Id = reader.GetInt32(0), expiry = reader.GetDateTime(1), title = reader.GetString(2), description = reader.GetString(3), completePercentage = reader.GetInt32(4) });
+        }
+        else
+        {
+            items.Add(new rest_api.Task { Id = reader.GetInt32(0), expiry = reader.GetDateTime(1), title = reader.GetString(2), completePercentage = reader.GetInt32(4) });
+
+        }
     }
 
     return Results.Ok(items);
@@ -297,3 +305,8 @@ app.MapDelete("/deleteTask/{id}", async (int id, IConfiguration config) =>
 
 app.Run();
 
+
+/*
+ * Making it public for tests
+ */
+public partial class Program { }

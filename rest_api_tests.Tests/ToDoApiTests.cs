@@ -9,18 +9,29 @@ namespace rest_api_tests.Tests
 {
     public class ToDoApiTests : IClassFixture<WebApplicationFactory<Program>>
     {
-        private readonly HttpClient _client;
+
+        private readonly WebApplicationFactory<Program> _factory;
 
         public ToDoApiTests(WebApplicationFactory<Program> factory)
         {
-            _client = factory.CreateClient();
+            _factory = factory;
         }
 
         /*
-         * 
-         * todo
-         * 
+         * Check if returns
          */
+        [Fact]
+        public async Task getAllReturns()
+        {
+            var client = _factory.CreateClient();
+
+            var response = await client.GetAsync("/getAll");
+
+            response.EnsureSuccessStatusCode();
+            var content = await response.Content.ReadAsStringAsync();
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        }
 
     }
 }
