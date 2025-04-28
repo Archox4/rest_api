@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 var builder = WebApplication.CreateBuilder(args);
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -62,17 +63,18 @@ app.MapGet("/getById", async (int id, IConfiguration config) =>
     cmd.Parameters.AddWithValue("@id", id);
 
     using var reader = await cmd.ExecuteReaderAsync();
-
+    var task = new rest_api.Task { };
     if (await reader.ReadAsync())
     {
-        var task = new rest_api.Task
+        if (!reader.IsDBNull(3))
         {
-            Id = reader.GetInt32("Id"),
-            title = reader.GetString("Title"),
-            description = reader.GetString("Description"),
-            expiry = reader.GetDateTime("Expiry"),
-            completePercentage = reader.GetInt32("CompletePercentage")
-        };
+            task = new rest_api.Task { Id = reader.GetInt32(0), expiry = reader.GetDateTime(1), title = reader.GetString(2), description = reader.GetString(3), completePercentage = reader.GetInt32(4) };
+        }
+        else
+        {
+            task = new rest_api.Task { Id = reader.GetInt32(0), expiry = reader.GetDateTime(1), title = reader.GetString(2), completePercentage = reader.GetInt32(4) };
+
+        }
 
         return Results.Ok(task);
     }
@@ -129,7 +131,15 @@ app.MapGet("/getIncoming", async (int option, IConfiguration config) =>
         var items = new List<rest_api.Task>();
         while (await reader.ReadAsync())
         {
-            items.Add(new rest_api.Task { Id = reader.GetInt32(0), expiry = reader.GetDateTime(1), title = reader.GetString(2), description = reader.GetString(3), completePercentage = reader.GetInt32(4) });
+            if (!reader.IsDBNull(3))
+            {
+                items.Add(new rest_api.Task { Id = reader.GetInt32(0), expiry = reader.GetDateTime(1), title = reader.GetString(2), description = reader.GetString(3), completePercentage = reader.GetInt32(4) });
+            }
+            else
+            {
+                items.Add(new rest_api.Task { Id = reader.GetInt32(0), expiry = reader.GetDateTime(1), title = reader.GetString(2), completePercentage = reader.GetInt32(4) });
+
+            }
         }
 
         return Results.Ok(items);

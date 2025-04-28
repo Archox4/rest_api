@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_DATABASE: tododb
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    ports:
+      - "3307:3306"
+    volumes:
+      - dbdata:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      retries: 5
+
+
+  api:
+    build:
+      context: ./rest_api
+      dockerfile: Dockerfile
+    ports:
+      - "5050:8080"
+    environment:
+      - ConnectionStrings__DefaultConnection=server=db;port=3306;database=tododb;Uid=root;
+    depends_on:
+      db:
+        condition: service_healthy
+
+
+volumes:
+  dbdata:
