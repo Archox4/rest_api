@@ -53,7 +53,7 @@ app.MapGet("/getAll", async (IConfiguration config) =>
 /*
  * Gets single record that matches id or throws 404
  */
-app.MapGet("/getById", async (int id, IConfiguration config) =>
+app.MapGet("/getById/{id}", async (int id, IConfiguration config) =>
 {
     var connStr = config.GetConnectionString("DefaultConnection");
     using var conn = new MySqlConnection(connStr);
@@ -82,14 +82,14 @@ app.MapGet("/getById", async (int id, IConfiguration config) =>
     return Results.NotFound();
 });
 /*
- * Gets incoming tasks based on the optio. Throws 400 if option is invalid
+ * Gets incoming tasks based on the option. Throws 400 if option is invalid
  * 
  * options:
     0 - today
     1 - next day
     2 - current week
 */
-app.MapGet("/getIncoming", async (int option, IConfiguration config) =>
+app.MapGet("/getIncoming/{option}", async (int option, IConfiguration config) =>
 {
     
 
@@ -153,7 +153,7 @@ app.MapGet("/getIncoming", async (int option, IConfiguration config) =>
 
 /*
  * Adds task to db by body (json). If data not valid throws 400.
- * Formula of body:
+ * Template of body:
  * {
     "expiry": "2025-04-24T12:23:47.603Z",
     "title": "string",
@@ -193,10 +193,15 @@ app.MapPost("/addTask", async (rest_api.Task task, IConfiguration config) =>
         cmd.Parameters.AddWithValue("@description", task.description);
         cmd.Parameters.AddWithValue("@completePercentage", task.completePercentage);
 
-        var id = Convert.ToInt32(await cmd.ExecuteScalarAsync());
-        task.Id = id;
+        await cmd.ExecuteNonQueryAsync();
 
-        return Results.Created($"/task/{id}", task);
+        // get and return created task's id
+
+        var getId = new MySqlCommand("SELECT LAST_INSERT_ID()", conn);
+        var getIdResult = await getId.ExecuteScalarAsync();
+        task.Id = Convert.ToInt32(getIdResult);
+
+        return Results.Created($"/task/{task.Id}", task);
     }
 
     return Results.StatusCode(400);
